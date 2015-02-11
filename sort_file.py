@@ -65,5 +65,4 @@ lines = sorted(acc, reverse=True)
 
 with open('test.txt', 'w') as thefile:
     for item in lines:
-        #temp = [str(word) for word in item]
-        thefile.write("{:<6f} {:<10f} {:<18f} {:<10f}\n".format(item))
+        thefile.write("{:<6} {:<10} {:<18} {:<10}\n".format(item[0], item[1], item[2], item[3]))
