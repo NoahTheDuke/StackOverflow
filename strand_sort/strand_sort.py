@@ -6,34 +6,56 @@ def strand_sort(array):
     if len(array) < 2:
         return array
     result = []
+
     while array:
-        i = 0
-        sublist = []
-        sublist.append(array.pop())
-        while i < len(array):
-            num = array[i]
-            if num > sublist[-1]:
-                sublist.append(num)
-                del array[i]
+        sublist = [array.pop()]
+        leftovers = []
+        for item in array:
+            if item > sublist[-1]:
+                sublist.append(item)
             else:
-                i = i + 1
-        result = merge(list(result), sublist)
+                leftovers.append(item)
+        result = merge(result, sublist)
+        array = leftovers
     return result
 
-def merge(list_1, list_2):
-    i = 0
-    j = 0
+#def merge(left, right):
+    #i = 0
+    #j = 0
+    #merged_list = []
+    #while i < len(left) and j < len(right):
+        #if left[i] > right[j]:
+            #merged_list.append(right[j])
+            #j += 1
+        #else:
+            #merged_list.append(left[i])
+            #i += 1
+    #merged_list += left[i:]
+    #merged_list += right[j:]
+    #return merged_list
+
+def merge(left, right):
     merged_list = []
-    while i < len(list_1) and j < len(list_2):
-        if list_1[i] > list_2[j]:
-            merged_list.append(list_2[j])
-            j += 1
+    it_left = iter(left)
+    it_right = iter(right)
+    left = next(it_left, None)
+    right = next(it_right, None)
+
+    while left is not None and right is not None:
+        if left > right:
+            merged_list.append(right)
+            right = next(it_right, None)
         else:
-            merged_list.append(list_1[i])
-            i += 1
-    merged_list += list_1[i:]
-    merged_list += list_2[j:]
+            merged_list.append(left)
+            left = next(it_left, None)
+    if left:
+        merged_list.append(left)
+        merged_list.extend(i for i in it_left)
+    else:
+        merged_list.append(right)
+        merged_list.extend(i for i in it_right)
     return merged_list
+
 
 #@profile
 def merge2(l1, l2):
@@ -56,14 +78,62 @@ def merge2(l1, l2):
     result.extend(it)
     return result
 
+def strand_sort_reddit(array):
+    if len(array) < 2:
+        return array
+    result = []
+    while array:
+        sublist = [array.pop()]
+        sub_append = sublist.append
+        leftovers = []
+        left_append = leftovers.append
+        for item in array:
+            if item > sublist[-1]:
+                sub_append(item)
+            else:
+                left_append(item)
+        result = merge_reddit(result, sublist)
+        array = leftovers
+    return result
+
+def merge_reddit(left, right):
+    merged_list = []
+    merged_list_append = merged_list.append
+
+    it_left = iter(left)
+    it_right = iter(right)
+
+    left = next(it_left, None)
+    right = next(it_right, None)
+
+    while left is not None and right is not None:
+        if left > right:
+            merged_list_append(right)
+            right = next(it_right, None)
+        else:
+            merged_list_append(left)
+            left = next(it_left, None)
+
+    if left:
+        merged_list_append(left)
+        merged_list.extend(i for i in it_left)
+    else:
+        merged_list_append(right)
+        merged_list.extend(i for i in it_right)
+
+    return merged_list
+
 #ls = list(range(10))
 #random.shuffle(ls)
 #print(strand_sort2(list(ls)))
 #print(strand_sort3(list(ls)))
 
 if __name__ == '__main__':
-    ls  = list(range(100000))
+    ls  = list(range(10))
     random.shuffle(ls)
     times = timeit.Timer(partial(strand_sort, list(ls))).repeat(3, 10000)
-    print("strand merge {}".format(min(times) / 10000))
+    print("strand merge {}".format(min(times) / 100))
     print(sorted(list(ls)) == strand_sort(list(ls)))
+    times = timeit.Timer(partial(strand_sort_reddit, list(ls))).repeat(3, 10000)
+    print("strand merge {}".format(min(times) / 100))
+    print(sorted(list(ls)) == strand_sort_reddit(list(ls)))
