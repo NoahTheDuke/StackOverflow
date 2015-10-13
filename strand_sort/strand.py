@@ -1,5 +1,5 @@
 import timeit
-from random import shuffle
+from random import shuffle, randrange
 from statistics import mean
 from functools import partial
 from collections import deque
@@ -110,7 +110,7 @@ def merge(left, right):
     merged_list += right[j:]
     return merged_list
 
-if __name__ == '__main__':
+def original():
     temp_shuffled = list(range(100))
     temp_sorted = sorted(temp_shuffled)
     temp_reversed = [x for x in reversed(temp_shuffled)]
@@ -151,3 +151,45 @@ if __name__ == '__main__':
 
         times = timeit.Timer(partial(strand_sort_original_1, list(ls))).repeat(reps, num)
         print("    1 \t\t\t{}\t{}\t{}".format(mean(times) / num, min(times) / num, max(times) / num))
+
+temp = [
+        [randrange(0, 1000) for _ in range(10)],
+        [randrange(0, 1000) for _ in range(100)],
+        [randrange(0, 1000) for _ in range(1000)],
+        [randrange(0, 1000) for _ in range(10000)],
+        #[randrange(0, 1000) for _ in range(100000)],
+        ]
+
+def main():
+    reps = 2
+    num = 2
+
+    tests = [
+            #'strand_sort_original_5',
+            'strand_sort_original_4',
+            'strand_sort_original_3',
+            'strand_sort_original_2',
+            'strand_sort_original_1',
+            ]
+    for l in range(len(temp)):
+
+        print("\n    On a list of {} items:\tMean\t\t\tMin\t\t\tMax".format(len(temp[l])))
+
+        for name in tests:
+
+            test = '{}(temp[{}][:])'.format(name, l)
+            setup = 'from __main__ import {}, temp'.format(name)
+
+            t = timeit.Timer(test, setup)
+
+            runs = t.repeat(reps, num)
+            print('    {}: {}{}\t{}\t{}'.format(
+                    name,
+                    "\t" if len(name) > 20 else "\t\t",
+                    mean(runs) / num,
+                    min(runs) / num,
+                    max(runs) / num,
+                    ))
+
+if __name__ == '__main__':
+    main()

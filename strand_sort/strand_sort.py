@@ -1,45 +1,39 @@
 import timeit
-from random import shuffle
+from random import shuffle, randrange
 from statistics import mean
 from functools import partial
 from collections import deque
 
-def strand_sort_original(unsorted):
-    if len(unsorted) < 2:
-        return unsorted
+def strand_sort_original_1(array):
+    if len(array) < 2:
+        return array
     result = []
-    while unsorted:
-        #i = 0
-        sublist = [unsorted.pop()]
-        leftovers = []
-        for item in unsorted:
-        #while i < len(unsorted):
-            #item = unsorted[i]
-            if item > sublist[-1]:
-                sublist.append(item)
-                #del unsorted[i]
+    while array:
+        i = 0
+        sublist = [array.pop()]
+        while i < len(array):
+            num = array[i]
+            if num > sublist[-1]:
+                sublist.append(num)
+                del array[i]
             else:
-                leftovers.append(item)
-                #i = i + 1
-        result = merge_original(result, sublist)
-        unsorted = leftovers
+                i = i + 1
+        result = merge_original_2(result, sublist)
     return result
 
-def merge_original(list_1, list_2):
+def merge_original_1(left, right):
     i = 0
     j = 0
     merged_list = []
-    len_left, len_right = len(list_1), len(list_2)
-    while i < len_left and j < len_right:
-    #while i < len(list_1) and j < len(list_2):
-        if list_1[i] > list_2[j]:
-            merged_list.append(list_2[j])
+    while i < len(left) and j < len(right):
+        if left[i] > right[j]:
+            merged_list.append(right[j])
             j += 1
         else:
-            merged_list.append(list_1[i])
+            merged_list.append(left[i])
             i += 1
-    merged_list += list_1[i:]
-    merged_list += list_2[j:]
+    merged_list += left[i:]
+    merged_list += right[j:]
     return merged_list
 
 def strand_sort_original_2(unsorted):
@@ -56,21 +50,21 @@ def strand_sort_original_2(unsorted):
                 del unsorted[i]
             else:
                 i = i + 1
-        result = merge_original(result, sublist)
+        result = merge_original_2(result, sublist)
     return result
 
-def merge_original_2(l1, l2):
-    if not l1: return l2
-    if not l2: return l1
+def merge_original_2(left, right):
+    if not left: return right
+    if not right: return left
 
-    if l1[-1] > l2[-1]:
-        l1, l2 = l2, l1
+    if left[-1] > right[-1]:
+        left, right = right, left
 
-    it = iter(l2)
+    it = iter(right)
     y = next(it)
     result = []
 
-    for x in l1:
+    for x in left:
         while y < x:
             result.append(y)
             y = next(it)
@@ -79,7 +73,45 @@ def merge_original_2(l1, l2):
     result.extend(it)
     return result
 
-def strand_sort_gengisteve(unsorted):
+def strand_sort_original_3(unsorted):
+    if len(unsorted) < 2:
+        return unsorted
+    result = []
+    while unsorted:
+        sublist = [unsorted.pop()]
+        leftovers = []
+        last = sublist[-1]
+        for item in unsorted:
+            if item >= last:
+                sublist.append(item)
+                last = item
+            else:
+                leftovers.append(item)
+        result = merge_original_2(result, sublist)
+        unsorted = leftovers
+    return result
+
+def strand_sort_original_4(unsorted):
+    if len(unsorted) < 2:
+        return unsorted
+    result = []
+    while unsorted:
+        sublist = [unsorted.pop(0)]
+        leftovers = []
+        last = sublist[0]
+        sublist_append = sublist.append
+        leftovers_append = leftovers.append
+        for item in unsorted:
+            if item >= last:
+                sublist_append(item)
+                last = item
+            else:
+                leftovers_append(item)
+        result = merge_original_2(result, sublist)
+        unsorted = leftovers
+    return result
+
+def strand_sort_gengisteve_1(unsorted):
     if len(unsorted) < 2:
         return unsorted
     result = []
@@ -113,9 +145,33 @@ def strand_sort_gengisteve_2(unsorted):
                 last = item
             else:
                 left_append(item)
-        result = merge_gengisteve(result, sublist)
+        result = merge_original_2(result, sublist)
         unsorted = leftovers
     return result
+
+def strand_sort_gengisteve_3(unsorted):
+    if len(unsorted) < 2:
+        return unsorted
+    result = []
+    while unsorted:
+        if type(unsorted) is list:
+            sublist = [unsorted.pop(0)]
+        else:
+            sublist = [unsorted.popleft()]
+        last = sublist[0]
+        sub_append = sublist.append
+        leftovers = deque()
+        left_append = leftovers.append
+        for item in unsorted:
+            if item >= last:
+                sub_append(item)
+                last = item
+            else:
+                left_append(item)
+        result = merge_original_2(result, sublist)
+        unsorted = leftovers
+    return result
+
 
 def merge_gengisteve(left, right):
     merged_list = []
@@ -161,42 +217,11 @@ def strand_sort_deque(unsorted):
                 last = item
             else:
                 left_append(item)
-        result = merge_deque(result, sublist)
+        result = merge_gengisteve(result, sublist)
         unsorted = leftovers
     return result
 
-def merge_deque(left, right):
-    merged_list = []
-    merged_list_append = merged_list.append
-
-    it_left = iter(left)
-    it_right = iter(right)
-
-    left = next(it_left, None)
-    right = next(it_right, None)
-
-    while left is not None and right is not None:
-        if left > right:
-            merged_list_append(right)
-            right = next(it_right, None)
-        else:
-            merged_list_append(left)
-            left = next(it_left, None)
-
-    if left:
-        merged_list_append(left)
-        merged_list.extend(i for i in it_left)
-    else:
-        merged_list_append(right)
-        merged_list.extend(i for i in it_right)
-
-    return merged_list
-
-#temp = list(range(10))
-#shuffle(temp)
-#print(strand_sort_original(temp))
-
-def main():
+def original():
     temp_shuffled = list(range(10))
     temp_sorted = sorted(temp_shuffled)
     temp_reversed = [x for x in reversed(temp_shuffled)]
@@ -206,7 +231,6 @@ def main():
             1: temp_reversed,
             2: temp_shuffled
             }
-    print(ls_dict)
     ls_words = {
             0: "Already sorted",
             1: "Reverse sorted",
@@ -224,13 +248,13 @@ def main():
 
         print("    Name \t\tMean\t\t\tMin\t\t\tMax")
 
-        times = timeit.Timer(partial(strand_sort_original, list(ls))).repeat(reps, num)
-        print("    original \t\t{}\t{}\t{}".format(mean(times) / num, min(times) / num, max(times) / num))
+        times = timeit.Timer(partial(strand_sort_original_1, list(ls))).repeat(reps, num)
+        print("    original_1 \t\t{}\t{}\t{}".format(mean(times) / num, min(times) / num, max(times) / num))
 
         times = timeit.Timer(partial(strand_sort_original_2, list(ls))).repeat(reps, num)
         print("    original_2 \t\t{}\t{}\t{}".format(mean(times) / num, min(times) / num, max(times) / num))
 
-        times = timeit.Timer(partial(strand_sort_gengisteve, list(ls))).repeat(reps, num)
+        times = timeit.Timer(partial(strand_sort_gengisteve_1, list(ls))).repeat(reps, num)
         print("    gengisteve \t\t{}\t{}\t{}".format(mean(times) / num, min(times) / num, max(times) / num))
 
         times = timeit.Timer(partial(strand_sort_gengisteve_2, list(ls))).repeat(reps, num)
@@ -238,3 +262,109 @@ def main():
 
         times = timeit.Timer(partial(strand_sort_deque, deque(ld))).repeat(reps, num)
         print("    deque \t\t{}\t{}\t{}".format(mean(times) / num, min(times) / num, max(times) / num))
+
+temp = [
+        [randrange(0, 1000) for _ in range(10)],
+        [randrange(0, 1000) for _ in range(100)],
+        [randrange(0, 1000) for _ in range(1000)],
+        [randrange(0, 1000) for _ in range(10000)],
+        [randrange(0, 1000) for _ in range(100000)],
+        ]
+
+t = temp[4][:]
+temp2 = [
+        sorted(t)[:],
+        [x for x in sorted(t)[::-1]][:],
+        t[:],
+        ]
+
+def main():
+    reps = 2
+    num = 2
+
+    tests = [
+            'strand_sort_original_4',
+            'strand_sort_deque',
+            'strand_sort_gengisteve_2',
+            'strand_sort_gengisteve_3',
+            ]
+
+    ls_words = {
+            0: "already sorted",
+            1: "reverse sorted",
+            2: "random order"
+            }
+
+    for l in range(len(temp2)):
+
+        print("\n    On a list of {} {} items:\tMean\t\t\tMin\t\t\tMax".format(len(temp2[l]), ls_words[l]))
+
+        for name in tests:
+
+            if name == 'strand_sort_deque':
+                test = '{}(deque(temp2[{}][:]))'.format(name, l)
+            else:
+                test = '{}(temp2[{}][:])'.format(name, l)
+            setup = 'from __main__ import {}, temp2; from collections import deque'.format(name)
+
+            t = timeit.Timer(test, setup)
+
+            runs = t.repeat(reps, num)
+            print('    {}: {}{}\t{}\t{}'.format(
+                    name,
+                    '\t\t' if name == 'strand_sort_deque' else '\t',
+                    mean(runs),
+                    min(runs),
+                    max(runs),
+                    ))
+
+t1 = temp[4][:]
+t2 = temp[4][:]
+temp1 = [
+        sorted(t1)[:],
+        [x for x in sorted(t1)[::-1]][:],
+        t1[:],
+        ]
+temp2 = [
+        sorted(t2)[:],
+        [x for x in sorted(t2)[::-1]][:],
+        t2[:],
+        ]
+def main2():
+    reps = 2
+    num = 2
+
+    tests = [
+            'merge_original_1',
+            'merge_original_2',
+            'merge_gengisteve',
+            ]
+
+    ls_words = {
+            0: "already sorted",
+            1: "reverse sorted",
+            2: "random order"
+            }
+
+    for l in range(len(temp2)):
+
+        print("\n    On a list of {} {} items:\tMean\t\t\tMin\t\t\tMax".format(len(temp2[l]), ls_words[l]))
+
+        for name in tests:
+
+            test = '{}(temp1[{}][:], temp2[{}][:])'.format(name, l, l)
+            setup = 'from __main__ import {}, temp1, temp2; from collections import deque'.format(name)
+
+            t = timeit.Timer(test, setup)
+
+            runs = t.repeat(reps, num)
+            print('    {}: {}{}\t{}\t{}'.format(
+                    name,
+                    '\t\t' if name == 'strand_sort_deque' else '\t',
+                    mean(runs),
+                    min(runs),
+                    max(runs),
+                    ))
+
+if __name__ == '__main__':
+    main2()
